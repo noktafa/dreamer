@@ -1,0 +1,24 @@
+---
+- name: Deploy LLM service code
+  hosts: elk
+  become: yes
+  tasks:
+    - name: Copy LLM service code
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../llm_service/"
+        dest: /opt/llm_service/
+        owner: appuser
+        group: appuser
+        mode: "0755"
+
+    - name: Install pip requirements
+      ansible.builtin.pip:
+        requirements: /opt/llm_service/requirements.txt
+        virtualenv: /opt/llm_service/venv
+        virtualenv_command: python3 -m venv
+
+    - name: Restart LLM service
+      ansible.builtin.systemd:
+        name: llm_service
+        state: restarted
+        daemon_reload: yes

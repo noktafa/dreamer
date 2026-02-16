@@ -1,0 +1,27 @@
+[Unit]
+Description=Banking POC FastAPI App
+After=network.target
+
+[Service]
+Type=simple
+User=appuser
+Group=appuser
+WorkingDirectory=/opt/app
+ExecStart=/opt/app/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000 --workers 2
+Environment=RABBITMQ_HOST={{ rabbitmq_ip }}
+Environment=RABBITMQ_PORT=5672
+Environment=RABBITMQ_USER={{ rabbitmq_user }}
+Environment=RABBITMQ_PASS={{ rabbitmq_pass }}
+Environment=RABBITMQ_VHOST={{ rabbitmq_vhost }}
+Environment=POSTGRES_HOST={{ postgresql_ip }}
+Environment=POSTGRES_PORT=5432
+Environment=POSTGRES_DB={{ postgresql_db }}
+Environment=POSTGRES_USER={{ postgresql_user }}
+Environment=POSTGRES_PASS={{ postgresql_pass }}
+Environment=APP_LOG_PATH=/var/log/app/app.log
+Environment=SERVER_NAME={{ inventory_hostname }}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,24 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - python3
+  - python3-pip
+  - python3-venv
+  - curl
+  - jq
+  - htop
+  - net-tools
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+timezone: UTC
+users:
+  - default
+  - name: appuser
+    groups: sudo
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+runcmd:
+  - mkdir -p /var/log/app /var/log/consumer /var/log/llm_service
+  - chown -R appuser:appuser /var/log/app /var/log/consumer /var/log/llm_service

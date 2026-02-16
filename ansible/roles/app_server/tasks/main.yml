@@ -1,0 +1,67 @@
+---
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Create app directory
+  ansible.builtin.file:
+    path: /opt/app
+    state: directory
+    owner: appuser
+    group: appuser
+    mode: "0755"
+
+- name: Copy app code
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../app/"
+    dest: /opt/app/
+    owner: appuser
+    group: appuser
+    mode: "0755"
+
+- name: Create Python venv
+  ansible.builtin.command:
+    cmd: python3 -m venv /opt/app/venv
+    creates: /opt/app/venv/bin/python
+
+- name: Install pip requirements
+  ansible.builtin.pip:
+    requirements: /opt/app/requirements.txt
+    virtualenv: /opt/app/venv
+
+- name: Deploy Nginx app config
+  ansible.builtin.template:
+    src: nginx_app.conf.j2
+    dest: /etc/nginx/sites-available/default
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable Nginx site config
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/default
+    dest: /etc/nginx/sites-enabled/default
+    state: link
+
+- name: Restart Nginx
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+    enabled: yes
+
+- name: Deploy app systemd service
+  ansible.builtin.template:
+    src: app.service.j2
+    dest: /etc/systemd/system/app.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start app service
+  ansible.builtin.systemd:
+    name: app
+    state: started
+    enabled: yes
+    daemon_reload: yes

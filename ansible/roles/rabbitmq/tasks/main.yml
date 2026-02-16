@@ -1,0 +1,138 @@
+---
+- name: Install prerequisites
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+      - apt-transport-https
+    state: present
+    update_cache: yes
+
+- name: Add RabbitMQ signing key
+  ansible.builtin.apt_key:
+    url: https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA
+    state: present
+
+- name: Add Erlang repo
+  ansible.builtin.apt_repository:
+    repo: "deb https://ppa.launchpadcontent.net/rabbitmq/rabbitmq-erlang/ubuntu noble main"
+    state: present
+
+- name: Add RabbitMQ repo
+  ansible.builtin.apt_repository:
+    repo: "deb https://packagecloud.io/rabbitmq/rabbitmq-server/ubuntu/ noble main"
+    state: present
+
+- name: Install RabbitMQ
+  ansible.builtin.apt:
+    name: rabbitmq-server
+    state: present
+    update_cache: yes
+
+- name: Enable management plugin
+  community.rabbitmq.rabbitmq_plugin:
+    names: rabbitmq_management
+    state: enabled
+
+- name: Configure RabbitMQ JSON logging
+  ansible.builtin.copy:
+    content: |
+      log.console = true
+      log.console.formatter = json
+      log.file = /var/log/rabbitmq/rabbit.log
+      log.file.formatter = json
+    dest: /etc/rabbitmq/rabbitmq.conf
+    owner: rabbitmq
+    group: rabbitmq
+    mode: "0644"
+  notify: restart rabbitmq
+
+- name: Start and enable RabbitMQ
+  ansible.builtin.service:
+    name: rabbitmq-server
+    state: started
+    enabled: yes
+
+- name: Create vhost
+  community.rabbitmq.rabbitmq_vhost:
+    name: "{{ rabbitmq_vhost }}"
+    state: present
+
+- name: Create RabbitMQ user
+  community.rabbitmq.rabbitmq_user:
+    user: "{{ rabbitmq_user }}"
+    password: "{{ rabbitmq_pass }}"
+    vhost: "{{ rabbitmq_vhost }}"
+    configure_priv: .*
+    read_priv: .*
+    write_priv: .*
+    tags: management
+    state: present
+
+- name: Wait for RabbitMQ management API
+  ansible.builtin.uri:
+    url: "http://localhost:15672/api/overview"
+    user: guest
+    password: guest
+    force_basic_auth: yes
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 10
+  delay: 5
+
+- name: Declare orders_exchange
+  ansible.builtin.command:
+    cmd: >
+      rabbitmqadmin declare exchange
+      --vhost={{ rabbitmq_vhost }}
+      name=orders_exchange type=direct durable=true
+      -u {{ rabbitmq_user }} -p {{ rabbitmq_pass }}
+
+- name: Declare dlx_exchange
+  ansible.builtin.command:
+    cmd: >
+      rabbitmqadmin declare exchange
+      --vhost={{ rabbitmq_vhost }}
+      name=dlx_exchange type=fanout durable=true
+      -u {{ rabbitmq_user }} -p {{ rabbitmq_pass }}
+
+- name: Declare orders_queue with DLX
+  ansible.builtin.command:
+    cmd: >
+      rabbitmqadmin declare queue
+      --vhost={{ rabbitmq_vhost }}
+      name=orders_queue durable=true
+      arguments='{"x-dead-letter-exchange":"dlx_exchange"}'
+      -u {{ rabbitmq_user }} -p {{ rabbitmq_pass }}
+
+- name: Declare dead_letter_queue
+  ansible.builtin.command:
+    cmd: >
+      rabbitmqadmin declare queue
+      --vhost={{ rabbitmq_vhost }}
+      name=dead_letter_queue durable=true
+      -u {{ rabbitmq_user }} -p {{ rabbitmq_pass }}
+
+- name: Bind orders_queue to orders_exchange
+  ansible.builtin.command:
+    cmd: >
+      rabbitmqadmin declare binding
+      --vhost={{ rabbitmq_vhost }}
+      source=orders_exchange destination=orders_queue
+      routing_key=orders
+      -u {{ rabbitmq_user }} -p {{ rabbitmq_pass }}
+
+- name: Bind dead_letter_queue to dlx_exchange
+  ansible.builtin.command:
+    cmd: >
+      rabbitmqadmin declare binding
+      --vhost={{ rabbitmq_vhost }}
+      source=dlx_exchange destination=dead_letter_queue
+      -u {{ rabbitmq_user }} -p {{ rabbitmq_pass }}
+
+handlers:
+- name: restart rabbitmq
+  ansible.builtin.service:
+    name: rabbitmq-server
+    state: restarted

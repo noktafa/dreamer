@@ -1,0 +1,26 @@
+[Unit]
+Description=Banking POC Queue Consumer
+After=network.target
+
+[Service]
+Type=simple
+User=appuser
+Group=appuser
+WorkingDirectory=/opt/consumer
+ExecStart=/opt/consumer/venv/bin/python main.py
+Environment=RABBITMQ_HOST={{ rabbitmq_ip }}
+Environment=RABBITMQ_PORT=5672
+Environment=RABBITMQ_USER={{ rabbitmq_user }}
+Environment=RABBITMQ_PASS={{ rabbitmq_pass }}
+Environment=RABBITMQ_VHOST={{ rabbitmq_vhost }}
+Environment=POSTGRES_HOST={{ postgresql_ip }}
+Environment=POSTGRES_PORT=5432
+Environment=POSTGRES_DB={{ postgresql_db }}
+Environment=POSTGRES_USER={{ postgresql_user }}
+Environment=POSTGRES_PASS={{ postgresql_pass }}
+Environment=CONSUMER_LOG_PATH=/var/log/consumer/consumer.log
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

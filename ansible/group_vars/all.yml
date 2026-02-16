@@ -1,0 +1,19 @@
+# Private IPs (resolved from inventory)
+lb_private_ip: "{{ hostvars[groups['lb'][0]]['private_ip'] }}"
+app_server_1_ip: "{{ hostvars[groups['app_servers'][0]]['private_ip'] }}"
+app_server_2_ip: "{{ hostvars[groups['app_servers'][1]]['private_ip'] }}"
+rabbitmq_ip: "{{ hostvars[groups['rabbitmq'][0]]['private_ip'] }}"
+consumer_ip: "{{ hostvars[groups['consumer'][0]]['private_ip'] }}"
+postgresql_ip: "{{ hostvars[groups['postgresql'][0]]['private_ip'] }}"
+elk_ip: "{{ hostvars[groups['elk'][0]]['private_ip'] }}"
+
+rabbitmq_user: "app_user"
+rabbitmq_pass: "***REMOVED***"
+rabbitmq_vhost: "/banking_poc"
+
+postgresql_db: "banking_poc"
+postgresql_user: "app_user"
+postgresql_pass: "***REMOVED***"
+
+openai_api_key: "{{ lookup('env', 'OPENAI_API_KEY') }}"
+openai_model: "gpt-4o"

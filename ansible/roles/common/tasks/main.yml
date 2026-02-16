@@ -1,0 +1,49 @@
+---
+- name: Generate /etc/hosts with private IPs
+  ansible.builtin.template:
+    content: |
+      127.0.0.1 localhost
+      {% for group_name in ['lb', 'app_servers', 'rabbitmq', 'consumer', 'postgresql', 'elk'] %}
+      {% for host in groups[group_name] | default([]) %}
+      {{ hostvars[host]['private_ip'] }} {{ host }}
+      {% endfor %}
+      {% endfor %}
+    dest: /etc/hosts
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Ensure Python 3 and venv are available
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+    state: present
+    update_cache: yes
+
+- name: Configure rsyslog JSON template
+  ansible.builtin.copy:
+    content: |
+      template(name="json-syslog" type="list") {
+        constant(value="{")
+        constant(value="\"timestamp\":\"")     property(name="timereported" dateFormat="rfc3339")
+        constant(value="\",\"server\":\"")     property(name="hostname")
+        constant(value="\",\"component\":\"os_syslog\"")
+        constant(value=",\"level\":\"")        property(name="syslogseverity-text")
+        constant(value="\",\"module\":\"")     property(name="programname")
+        constant(value="\",\"message\":\"")    property(name="msg" format="jsonf")
+        constant(value="\"}\n")
+      }
+      *.* /var/log/syslog-json.log;json-syslog
+    dest: /etc/rsyslog.d/50-json.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart rsyslog
+
+handlers:
+- name: restart rsyslog
+  ansible.builtin.service:
+    name: rsyslog
+    state: restarted

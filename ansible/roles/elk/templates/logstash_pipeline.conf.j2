@@ -1,0 +1,41 @@
+input {
+  beats { port => 5044 }
+}
+
+filter {
+  json {
+    source => "message"
+    target => "log_data"
+    skip_on_invalid_json => true
+  }
+
+  if [log_data][correlation_id] {
+    mutate {
+      add_field => { "correlation_id" => "%{[log_data][correlation_id]}" }
+    }
+  }
+
+  if [fields][component] {
+    mutate {
+      add_field => { "component" => "%{[fields][component]}" }
+    }
+  }
+
+  if [fields][server] {
+    mutate {
+      add_field => { "source_server" => "%{[fields][server]}" }
+    }
+  }
+
+  date {
+    match => [ "[log_data][timestamp]", "ISO8601" ]
+    target => "@timestamp"
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["localhost:9200"]
+    index => "banking-poc-logs-%{+YYYY.MM.dd}"
+  }
+}

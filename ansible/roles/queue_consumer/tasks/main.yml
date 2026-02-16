@@ -1,0 +1,41 @@
+---
+- name: Create consumer directory
+  ansible.builtin.file:
+    path: /opt/consumer
+    state: directory
+    owner: appuser
+    group: appuser
+    mode: "0755"
+
+- name: Copy consumer code
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../consumer/"
+    dest: /opt/consumer/
+    owner: appuser
+    group: appuser
+    mode: "0755"
+
+- name: Create Python venv
+  ansible.builtin.command:
+    cmd: python3 -m venv /opt/consumer/venv
+    creates: /opt/consumer/venv/bin/python
+
+- name: Install pip requirements
+  ansible.builtin.pip:
+    requirements: /opt/consumer/requirements.txt
+    virtualenv: /opt/consumer/venv
+
+- name: Deploy consumer systemd service
+  ansible.builtin.template:
+    src: consumer.service.j2
+    dest: /etc/systemd/system/consumer.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start consumer service
+  ansible.builtin.systemd:
+    name: consumer
+    state: started
+    enabled: yes
+    daemon_reload: yes

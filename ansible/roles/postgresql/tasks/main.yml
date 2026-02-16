@@ -1,0 +1,91 @@
+---
+- name: Install PostgreSQL prerequisites
+  ansible.builtin.apt:
+    name:
+      - wget
+      - gnupg
+    state: present
+    update_cache: yes
+
+- name: Add PostgreSQL APT key
+  ansible.builtin.apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PostgreSQL repo
+  ansible.builtin.apt_repository:
+    repo: "deb https://apt.postgresql.org/pub/repos/apt noble-pgdg main"
+    state: present
+
+- name: Install PostgreSQL 16
+  ansible.builtin.apt:
+    name: postgresql-16
+    state: present
+    update_cache: yes
+
+- name: Configure listen_addresses
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/16/main/postgresql.conf
+    regexp: "^#?listen_addresses"
+    line: "listen_addresses = '*'"
+  notify: restart postgresql
+
+- name: Configure JSON logging
+  ansible.builtin.blockinfile:
+    path: /etc/postgresql/16/main/postgresql.conf
+    block: |
+      log_destination = 'jsonlog'
+      logging_collector = on
+      log_directory = '/var/log/postgresql'
+      log_min_duration_statement = 100
+      log_statement = 'ddl'
+    marker: "# {mark} BANKING POC LOGGING CONFIG"
+  notify: restart postgresql
+
+- name: Deploy pg_hba.conf
+  ansible.builtin.template:
+    src: pg_hba.conf.j2
+    dest: /etc/postgresql/16/main/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: restart postgresql
+
+- name: Ensure PostgreSQL is started
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Create database
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ postgresql_db }}"
+    state: present
+
+- name: Create database user
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: "{{ postgresql_user }}"
+    password: "{{ postgresql_pass }}"
+    db: "{{ postgresql_db }}"
+    priv: ALL
+    state: present
+
+- name: Copy schema file
+  ansible.builtin.copy:
+    src: schema.sql
+    dest: /tmp/schema.sql
+    mode: "0644"
+
+- name: Execute schema
+  become_user: postgres
+  ansible.builtin.command:
+    cmd: psql -d {{ postgresql_db }} -f /tmp/schema.sql
+  changed_when: false
+
+handlers:
+- name: restart postgresql
+  ansible.builtin.service:
+    name: postgresql
+    state: restarted

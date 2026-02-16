@@ -1,0 +1,41 @@
+---
+- name: Create LLM service directory
+  ansible.builtin.file:
+    path: /opt/llm_service
+    state: directory
+    owner: appuser
+    group: appuser
+    mode: "0755"
+
+- name: Copy LLM service code
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../llm_service/"
+    dest: /opt/llm_service/
+    owner: appuser
+    group: appuser
+    mode: "0755"
+
+- name: Create Python venv
+  ansible.builtin.command:
+    cmd: python3 -m venv /opt/llm_service/venv
+    creates: /opt/llm_service/venv/bin/python
+
+- name: Install pip requirements
+  ansible.builtin.pip:
+    requirements: /opt/llm_service/requirements.txt
+    virtualenv: /opt/llm_service/venv
+
+- name: Deploy LLM service systemd unit
+  ansible.builtin.template:
+    src: llm_service.service.j2
+    dest: /etc/systemd/system/llm_service.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start LLM service
+  ansible.builtin.systemd:
+    name: llm_service
+    state: started
+    enabled: yes
+    daemon_reload: yes

@@ -1,0 +1,24 @@
+---
+- name: Deploy application code to app servers
+  hosts: app_servers
+  become: yes
+  tasks:
+    - name: Copy app code
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../app/"
+        dest: /opt/app/
+        owner: appuser
+        group: appuser
+        mode: "0755"
+
+    - name: Install pip requirements
+      ansible.builtin.pip:
+        requirements: /opt/app/requirements.txt
+        virtualenv: /opt/app/venv
+        virtualenv_command: python3 -m venv
+
+    - name: Restart app service
+      ansible.builtin.systemd:
+        name: app
+        state: restarted
+        daemon_reload: yes

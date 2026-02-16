@@ -1,0 +1,21 @@
+[Unit]
+Description=Banking POC LLM RAG Service
+After=network.target elasticsearch.service
+
+[Service]
+Type=simple
+User=appuser
+Group=appuser
+WorkingDirectory=/opt/llm_service
+ExecStart=/opt/llm_service/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8080 --workers 1
+Environment=ELASTICSEARCH_HOST=localhost
+Environment=ELASTICSEARCH_PORT=9200
+Environment=ELASTICSEARCH_INDEX=banking-poc-logs-*
+Environment=OPENAI_API_KEY={{ openai_api_key }}
+Environment=OPENAI_MODEL={{ openai_model }}
+Environment=LLM_LOG_PATH=/var/log/llm_service/llm_service.log
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

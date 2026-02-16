@@ -1,0 +1,97 @@
+---
+- name: Install prerequisites
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - gnupg
+      - wget
+    state: present
+    update_cache: yes
+
+- name: Add Elastic GPG key
+  ansible.builtin.apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add Elastic APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://artifacts.elastic.co/packages/8.x/apt stable main"
+    state: present
+
+- name: Install Elasticsearch
+  ansible.builtin.apt:
+    name: elasticsearch
+    state: present
+    update_cache: yes
+
+- name: Configure Elasticsearch
+  ansible.builtin.copy:
+    content: |
+      cluster.name: banking-poc
+      node.name: elk-node-1
+      network.host: 0.0.0.0
+      discovery.type: single-node
+      xpack.security.enabled: false
+    dest: /etc/elasticsearch/elasticsearch.yml
+    owner: root
+    group: elasticsearch
+    mode: "0660"
+
+- name: Enable and start Elasticsearch
+  ansible.builtin.systemd:
+    name: elasticsearch
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Wait for Elasticsearch to be ready
+  ansible.builtin.uri:
+    url: http://localhost:9200
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 5
+
+- name: Install Logstash
+  ansible.builtin.apt:
+    name: logstash
+    state: present
+
+- name: Deploy Logstash pipeline config
+  ansible.builtin.template:
+    src: logstash_pipeline.conf.j2
+    dest: /etc/logstash/conf.d/banking-poc.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start Logstash
+  ansible.builtin.systemd:
+    name: logstash
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Install Kibana
+  ansible.builtin.apt:
+    name: kibana
+    state: present
+
+- name: Configure Kibana
+  ansible.builtin.copy:
+    content: |
+      server.port: 5601
+      server.host: "0.0.0.0"
+      elasticsearch.hosts: ["http://localhost:9200"]
+    dest: /etc/kibana/kibana.yml
+    owner: root
+    group: kibana
+    mode: "0660"
+
+- name: Enable and start Kibana
+  ansible.builtin.systemd:
+    name: kibana
+    state: started
+    enabled: yes
+    daemon_reload: yes

@@ -1,0 +1,25 @@
+log_format json_combined escape=json
+  '{'
+    '"timestamp":"$time_iso8601",'
+    '"server":"{{ inventory_hostname }}",'
+    '"component":"nginx_app",'
+    '"remote_addr":"$remote_addr",'
+    '"request_method":"$request_method",'
+    '"request_uri":"$request_uri",'
+    '"status":$status,'
+    '"request_time":$request_time,'
+    '"http_x_correlation_id":"$http_x_correlation_id"'
+  '}';
+
+server {
+    listen 80;
+    access_log /var/log/nginx/access.log json_combined;
+    error_log /var/log/nginx/error.log warn;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Correlation-ID $http_x_correlation_id;
+    }
+}

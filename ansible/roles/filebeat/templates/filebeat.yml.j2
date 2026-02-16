@@ -1,0 +1,74 @@
+filebeat.inputs:
+  - type: log
+    paths:
+      - /var/log/syslog
+    fields:
+      component: "os_syslog"
+      server: "{{ inventory_hostname }}"
+    fields_under_root: false
+
+{% if 'lb' in group_names %}
+  - type: log
+    paths:
+      - /var/log/nginx/access.log
+      - /var/log/nginx/error.log
+    fields:
+      component: "nginx_lb"
+      server: "{{ inventory_hostname }}"
+    fields_under_root: false
+{% endif %}
+
+{% if 'app_servers' in group_names %}
+  - type: log
+    paths:
+      - /var/log/nginx/access.log
+      - /var/log/nginx/error.log
+    fields:
+      component: "nginx_app"
+      server: "{{ inventory_hostname }}"
+    fields_under_root: false
+
+  - type: log
+    paths:
+      - /var/log/app/app.log
+    fields:
+      component: "app"
+      server: "{{ inventory_hostname }}"
+    fields_under_root: false
+{% endif %}
+
+{% if 'rabbitmq' in group_names %}
+  - type: log
+    paths:
+      - /var/log/rabbitmq/rabbit.log
+    fields:
+      component: "rabbitmq"
+      server: "{{ inventory_hostname }}"
+    fields_under_root: false
+{% endif %}
+
+{% if 'consumer' in group_names %}
+  - type: log
+    paths:
+      - /var/log/consumer/consumer.log
+    fields:
+      component: "queue_consumer"
+      server: "{{ inventory_hostname }}"
+    fields_under_root: false
+{% endif %}
+
+{% if 'postgresql' in group_names %}
+  - type: log
+    paths:
+      - /var/log/postgresql/postgresql*.log
+    fields:
+      component: "postgresql"
+      server: "{{ inventory_hostname }}"
+    fields_under_root: false
+{% endif %}
+
+output.logstash:
+  hosts: ["{{ elk_ip }}:5044"]
+
+processors:
+  - add_host_metadata: ~

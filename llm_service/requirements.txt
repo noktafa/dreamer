@@ -1,0 +1,7 @@
+fastapi==0.115.*
+uvicorn[standard]==0.34.*
+elasticsearch==8.*
+openai==1.*
+python-json-logger==2.0.*
+pydantic==2.*
+pydantic-settings==2.*

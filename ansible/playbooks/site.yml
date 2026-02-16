@@ -1,0 +1,54 @@
+---
+- name: Common setup for all servers
+  hosts: all
+  become: yes
+  roles:
+    - common
+
+- name: Configure PostgreSQL
+  hosts: postgresql
+  become: yes
+  roles:
+    - postgresql
+
+- name: Configure RabbitMQ
+  hosts: rabbitmq
+  become: yes
+  roles:
+    - rabbitmq
+
+- name: Configure Nginx Load Balancer
+  hosts: lb
+  become: yes
+  roles:
+    - nginx_lb
+
+- name: Configure App Servers
+  hosts: app_servers
+  become: yes
+  roles:
+    - app_server
+
+- name: Configure Queue Consumer
+  hosts: consumer
+  become: yes
+  roles:
+    - queue_consumer
+
+- name: Configure ELK Stack
+  hosts: elk
+  become: yes
+  roles:
+    - elk
+
+- name: Configure LLM Service
+  hosts: elk
+  become: yes
+  roles:
+    - llm_service
+
+- name: Configure Filebeat on all servers
+  hosts: all
+  become: yes
+  roles:
+    - filebeat
