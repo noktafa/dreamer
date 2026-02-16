@@ -1,6 +1,10 @@
-# dreamer
+<p align="center">
+  <img src="assets/logo.svg" alt="dreamer" width="600"/>
+</p>
 
-Banking system monitoring POC with LLM-powered log analysis on DigitalOcean.
+<p align="center">
+  Banking system monitoring POC with LLM-powered log analysis on DigitalOcean.
+</p>
 
 ## Architecture
 
