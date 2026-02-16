@@ -7,6 +7,14 @@
     group: appuser
     mode: "0755"
 
+- name: Create consumer log directory
+  ansible.builtin.file:
+    path: /var/log/consumer
+    state: directory
+    owner: appuser
+    group: appuser
+    mode: "0755"
+
 - name: Copy consumer code
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../../consumer/"

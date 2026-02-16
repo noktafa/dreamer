@@ -32,10 +32,41 @@
       network.host: 0.0.0.0
       discovery.type: single-node
       xpack.security.enabled: false
+      xpack.security.enrollment.enabled: false
+      xpack.security.http.ssl.enabled: false
+      xpack.security.transport.ssl.enabled: false
     dest: /etc/elasticsearch/elasticsearch.yml
     owner: root
     group: elasticsearch
     mode: "0660"
+
+- name: Reset Elasticsearch keystore to remove auto-configured security
+  ansible.builtin.shell:
+    cmd: |
+      rm -f /etc/elasticsearch/elasticsearch.keystore
+      /usr/share/elasticsearch/bin/elasticsearch-keystore create
+      chown root:elasticsearch /etc/elasticsearch/elasticsearch.keystore
+    creates: /etc/elasticsearch/.keystore_reset_marker
+
+- name: Mark keystore as reset
+  ansible.builtin.file:
+    path: /etc/elasticsearch/.keystore_reset_marker
+    state: touch
+    owner: root
+    group: elasticsearch
+    mode: "0660"
+
+- name: Fix Elasticsearch directory permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    recurse: yes
+  loop:
+    - /usr/share/elasticsearch/data
+    - /usr/share/elasticsearch/logs
+    - /var/log/elasticsearch
 
 - name: Enable and start Elasticsearch
   ansible.builtin.systemd:

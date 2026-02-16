@@ -1,4 +1,12 @@
 ---
+- name: Install Filebeat prerequisites
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - gnupg
+    state: present
+    update_cache: yes
+
 - name: Add Elastic GPG key
   ansible.builtin.apt_key:
     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch

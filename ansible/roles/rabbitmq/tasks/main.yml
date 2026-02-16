@@ -1,29 +1,25 @@
 ---
-- name: Install prerequisites
-  ansible.builtin.apt:
-    name:
-      - curl
-      - gnupg
-      - apt-transport-https
-    state: present
-    update_cache: yes
+- name: Remove leftover Cloudsmith Erlang repo
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/rabbitmq-erlang.gpg] https://ppa1.rabbitmq.com/rabbitmq/rabbitmq-erlang/deb/ubuntu noble main"
+    state: absent
+    filename: rabbitmq-erlang
+  ignore_errors: yes
 
-- name: Add RabbitMQ signing key
-  ansible.builtin.apt_key:
-    url: https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA
-    state: present
+- name: Remove leftover Cloudsmith RabbitMQ repo
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/rabbitmq-server.gpg] https://ppa1.rabbitmq.com/rabbitmq/rabbitmq-server/deb/ubuntu noble main"
+    state: absent
+    filename: rabbitmq-server
+  ignore_errors: yes
 
-- name: Add Erlang repo
+- name: Remove leftover Erlang PPA
   ansible.builtin.apt_repository:
     repo: "deb https://ppa.launchpadcontent.net/rabbitmq/rabbitmq-erlang/ubuntu noble main"
-    state: present
+    state: absent
+  ignore_errors: yes
 
-- name: Add RabbitMQ repo
-  ansible.builtin.apt_repository:
-    repo: "deb https://packagecloud.io/rabbitmq/rabbitmq-server/ubuntu/ noble main"
-    state: present
-
-- name: Install RabbitMQ
+- name: Install RabbitMQ from distro repos
   ansible.builtin.apt:
     name: rabbitmq-server
     state: present
@@ -130,9 +126,3 @@
       --vhost={{ rabbitmq_vhost }}
       source=dlx_exchange destination=dead_letter_queue
       -u {{ rabbitmq_user }} -p {{ rabbitmq_pass }}
-
-handlers:
-- name: restart rabbitmq
-  ansible.builtin.service:
-    name: rabbitmq-server
-    state: restarted

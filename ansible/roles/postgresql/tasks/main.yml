@@ -17,9 +17,11 @@
     repo: "deb https://apt.postgresql.org/pub/repos/apt noble-pgdg main"
     state: present
 
-- name: Install PostgreSQL 16
+- name: Install PostgreSQL 16 and psycopg2
   ansible.builtin.apt:
-    name: postgresql-16
+    name:
+      - postgresql-16
+      - python3-psycopg2
     state: present
     update_cache: yes
 
@@ -68,8 +70,15 @@
   community.postgresql.postgresql_user:
     name: "{{ postgresql_user }}"
     password: "{{ postgresql_pass }}"
-    db: "{{ postgresql_db }}"
-    priv: ALL
+    state: present
+
+- name: Grant privileges to database user
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    database: "{{ postgresql_db }}"
+    roles: "{{ postgresql_user }}"
+    type: database
+    privs: ALL
     state: present
 
 - name: Copy schema file
@@ -84,8 +93,3 @@
     cmd: psql -d {{ postgresql_db }} -f /tmp/schema.sql
   changed_when: false
 
-handlers:
-- name: restart postgresql
-  ansible.builtin.service:
-    name: postgresql
-    state: restarted

@@ -7,6 +7,14 @@
     group: appuser
     mode: "0755"
 
+- name: Create LLM service log directory
+  ansible.builtin.file:
+    path: /var/log/llm_service
+    state: directory
+    owner: appuser
+    group: appuser
+    mode: "0755"
+
 - name: Copy LLM service code
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../../llm_service/"

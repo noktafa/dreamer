@@ -40,6 +40,12 @@ variable "vpc_ip_range" {
   default     = "10.10.0.0/16"
 }
 
+variable "ssh_private_key_path" {
+  description = "Path to SSH private key for remote-exec provisioner"
+  type        = string
+  default     = "~/.ssh/id_rsa"
+}
+
 variable "droplets" {
   description = "Droplet definitions"
   type = map(object({

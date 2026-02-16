@@ -13,6 +13,14 @@
     group: appuser
     mode: "0755"
 
+- name: Create app log directory
+  ansible.builtin.file:
+    path: /var/log/app
+    state: directory
+    owner: appuser
+    group: appuser
+    mode: "0755"
+
 - name: Copy app code
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../../app/"

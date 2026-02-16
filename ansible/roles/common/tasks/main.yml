@@ -1,6 +1,6 @@
 ---
 - name: Generate /etc/hosts with private IPs
-  ansible.builtin.template:
+  ansible.builtin.copy:
     content: |
       127.0.0.1 localhost
       {% for group_name in ['lb', 'app_servers', 'rabbitmq', 'consumer', 'postgresql', 'elk'] %}
@@ -13,14 +13,24 @@
     group: root
     mode: "0644"
 
-- name: Ensure Python 3 and venv are available
+- name: Ensure Python 3, venv, and common prereqs are available
   ansible.builtin.apt:
     name:
       - python3
       - python3-pip
       - python3-venv
+      - gnupg
+      - apt-transport-https
+      - curl
     state: present
     update_cache: yes
+
+- name: Create appuser system account
+  ansible.builtin.user:
+    name: appuser
+    system: yes
+    shell: /usr/sbin/nologin
+    create_home: no
 
 - name: Configure rsyslog JSON template
   ansible.builtin.copy:
@@ -41,9 +51,3 @@
     group: root
     mode: "0644"
   notify: restart rsyslog
-
-handlers:
-- name: restart rsyslog
-  ansible.builtin.service:
-    name: rsyslog
-    state: restarted
