@@ -19,6 +19,8 @@ Environment=POSTGRES_DB={{ postgresql_db }}
 Environment=POSTGRES_USER={{ postgresql_user }}
 Environment=POSTGRES_PASS={{ postgresql_pass }}
 Environment=CONSUMER_LOG_PATH=/var/log/consumer/consumer.log
+StandardOutput=append:/var/log/consumer/consumer.log
+StandardError=append:/var/log/consumer/consumer.log
 Restart=always
 RestartSec=5
 

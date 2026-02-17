@@ -20,6 +20,8 @@ Environment=POSTGRES_USER={{ postgresql_user }}
 Environment=POSTGRES_PASS={{ postgresql_pass }}
 Environment=APP_LOG_PATH=/var/log/app/app.log
 Environment=SERVER_NAME={{ inventory_hostname }}
+StandardOutput=append:/var/log/app/app.log
+StandardError=append:/var/log/app/app.log
 Restart=always
 RestartSec=5
 
