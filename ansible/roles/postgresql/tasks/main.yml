@@ -93,3 +93,25 @@
     cmd: psql -d {{ postgresql_db }} -f /tmp/schema.sql
   changed_when: false
 
+- name: Grant table privileges to app user
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    database: "{{ postgresql_db }}"
+    roles: "{{ postgresql_user }}"
+    schema: public
+    type: table
+    objs: ALL_IN_SCHEMA
+    privs: ALL
+    state: present
+
+- name: Grant sequence privileges to app user
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    database: "{{ postgresql_db }}"
+    roles: "{{ postgresql_user }}"
+    schema: public
+    type: sequence
+    objs: ALL_IN_SCHEMA
+    privs: ALL
+    state: present
+
