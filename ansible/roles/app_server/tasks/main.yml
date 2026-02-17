@@ -21,6 +21,16 @@
     group: appuser
     mode: "0755"
 
+- name: Ensure app log file exists with correct ownership
+  ansible.builtin.file:
+    path: /var/log/app/app.log
+    state: touch
+    owner: appuser
+    group: appuser
+    mode: "0644"
+    modification_time: preserve
+    access_time: preserve
+
 - name: Copy app code
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../../app/"
