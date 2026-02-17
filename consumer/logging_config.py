@@ -18,7 +18,7 @@ class CorrelationFilter(logging.Filter):
 
 def setup_logging() -> None:
     formatter = jsonlogger.JsonFormatter(
-        fmt="%(timestamp)s %(level)s %(correlation_id)s %(server)s %(module)s %(message)s",
+        fmt="%(asctime)s %(levelname)s %(correlation_id)s %(server)s %(module)s %(message)s",
         rename_fields={
             "levelname": "level",
             "asctime": "timestamp",

@@ -35,15 +35,15 @@ def search_logs(parsed_query: dict) -> dict:
 
         severity = parsed_query.get("severity", [])
         if severity:
-            must_filters.append({"terms": {"log_data.level": severity}})
+            must_filters.append({"terms": {"log_data.level.keyword": severity}})
 
         components = parsed_query.get("components", [])
         if components:
-            must_filters.append({"terms": {"component": components}})
+            must_filters.append({"terms": {"component.keyword": components}})
 
         cid = parsed_query.get("correlation_id")
         if cid:
-            must_filters.append({"term": {"correlation_id": cid}})
+            must_filters.append({"term": {"correlation_id.keyword": cid}})
 
         keywords = parsed_query.get("keywords", [])
         for kw in keywords:
@@ -59,9 +59,9 @@ def search_logs(parsed_query: dict) -> dict:
             "size": settings.MAX_LOG_ENTRIES,
             "aggs": {
                 "errors_by_component": {
-                    "filter": {"term": {"log_data.level": "ERROR"}},
+                    "filter": {"term": {"log_data.level.keyword": "ERROR"}},
                     "aggs": {
-                        "components": {"terms": {"field": "component", "size": 20}},
+                        "components": {"terms": {"field": "component.keyword", "size": 20}},
                     },
                 },
                 "logs_over_time": {
@@ -98,13 +98,13 @@ def get_recent_summary(minutes: int = 15) -> dict:
                 "aggs": {
                     "total_logs": {"value_count": {"field": "@timestamp"}},
                     "errors_by_component": {
-                        "filter": {"term": {"log_data.level": "ERROR"}},
+                        "filter": {"term": {"log_data.level.keyword": "ERROR"}},
                         "aggs": {
-                            "components": {"terms": {"field": "component", "size": 20}},
+                            "components": {"terms": {"field": "component.keyword", "size": 20}},
                         },
                     },
                     "warnings_count": {
-                        "filter": {"term": {"log_data.level": "WARNING"}},
+                        "filter": {"term": {"log_data.level.keyword": "WARNING"}},
                     },
                 },
             },
