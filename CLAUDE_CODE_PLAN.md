@@ -92,7 +92,7 @@ droplet_sizes:
 
 rabbitmq:
   user: app_user
-  pass: ***REMOVED***
+  pass: (set via RABBITMQ_PASS env var)
   vhost: /banking_poc
   exchange: orders_exchange
   queue: orders_queue
@@ -103,7 +103,7 @@ rabbitmq:
 postgresql:
   db: banking_poc
   user: app_user
-  pass: ***REMOVED***
+  pass: (set via POSTGRES_PASS env var)
 
 openai:
   model: gpt-4o

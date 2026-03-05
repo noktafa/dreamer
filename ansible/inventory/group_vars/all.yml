@@ -8,12 +8,12 @@ postgresql_ip: "{{ hostvars[groups['postgresql'][0]]['private_ip'] }}"
 elk_ip: "{{ hostvars[groups['elk'][0]]['private_ip'] }}"
 
 rabbitmq_user: "app_user"
-rabbitmq_pass: "***REMOVED***"
+rabbitmq_pass: "{{ lookup('env', 'RABBITMQ_PASS') }}"
 rabbitmq_vhost: "/banking_poc"
 
 postgresql_db: "banking_poc"
 postgresql_user: "app_user"
-postgresql_pass: "***REMOVED***"
+postgresql_pass: "{{ lookup('env', 'POSTGRES_PASS') }}"
 
 openai_api_key: "{{ lookup('env', 'OPENAI_API_KEY') }}"
 openai_model: "gpt-4o"
